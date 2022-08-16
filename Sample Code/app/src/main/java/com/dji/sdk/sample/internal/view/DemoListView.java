@@ -51,6 +51,7 @@ import com.dji.sdk.sample.demo.missionoperator.FollowMeMissionOperatorView;
 import com.dji.sdk.sample.demo.missionoperator.WaypointMissionOperatorView;
 import com.dji.sdk.sample.demo.missionoperator.WaypointV2MissionOperatorView;
 import com.dji.sdk.sample.demo.mobileremotecontroller.MobileRemoteControllerView;
+import com.dji.sdk.sample.demo.mydemo.BasicInfoView;
 import com.dji.sdk.sample.demo.radar.RadarView;
 import com.dji.sdk.sample.demo.remotecontroller.DualRemoteControllerView;
 import com.dji.sdk.sample.demo.remotecontroller.PushRemoteControllerDataView;
@@ -92,6 +93,12 @@ public class DemoListView extends FrameLayout {
 
         // Build model for ListView
         ListItem.ListBuilder builder = new ListItem.ListBuilder();
+        builder.addGroup(R.string.component_listview_CFCDemo,
+                false,
+                new GroupItem(R.string.component_listview_CFCDemo_BasicInfo, BasicInfoView.class),
+                new GroupItem(R.string.component_listview_CFCDemo_VirtualStick, VirtualStickView.class),
+                new GroupItem(R.string.component_listview_CFCDemo_Live, LiveStreamView.class));
+
         builder.addGroup(R.string.component_listview_sdk_4_16,
                 false,
                 new GroupItem(R.string.look_at_mission, LookAtMissionView.class));

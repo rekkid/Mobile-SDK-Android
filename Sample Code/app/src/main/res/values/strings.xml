@@ -74,6 +74,11 @@
 
     <string name="component_listview_key_manager">KeyManager</string>
 
+    <string name="component_listview_CFCDemo">CfcDemo</string>
+    <string name="component_listview_CFCDemo_BasicInfo">Basic Info</string>
+    <string name="component_listview_CFCDemo_VirtualStick">Virtual Stick</string>
+    <string name="component_listview_CFCDemo_Live">Live</string>
+
     <!-- KeyManager list-->
     <string name="key_manager_listview_key_Interface">Key Manager View</string>
     <string name="key_manager_component_spinner_title">Component</string>
@@ -131,7 +136,6 @@
     <string name="flight_controller_subtitle_intelligent_flight_assistant">Intelligent Flight Assistant</string>
     <string name="flight_controller_listview_intelligent_flight_assistant">Intelligent Flight Assistant</string>
     <string name="flight_controller_listview_networkRTK">Network RTK</string>
-
 
 
     <!-- Airlink list -->

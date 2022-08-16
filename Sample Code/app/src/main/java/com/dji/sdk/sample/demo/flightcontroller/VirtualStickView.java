@@ -1,5 +1,7 @@
 package com.dji.sdk.sample.demo.flightcontroller;
 
+import static com.dji.sdk.sample.internal.utils.ToastUtils.showToast;
+
 import android.app.Service;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -38,6 +40,7 @@ import dji.keysdk.FlightControllerKey;
 import dji.keysdk.KeyManager;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.flightcontroller.Simulator;
+import dji.sdk.products.Aircraft;
 
 
 /**
@@ -110,6 +113,12 @@ public class VirtualStickView extends RelativeLayout implements View.OnClickList
     }
 
     private void initParams() {
+        Aircraft aircraft = DJISampleApplication.getAircraftInstance();
+        if (aircraft == null || !aircraft.isConnected()) {
+            showToast("Disconnected");
+//            mFlightController = null;
+            return;
+        }
         // We recommand you use the below settings, a standard american hand style.
         if (flightController == null) {
             if (ModuleVerificationUtil.isFlightControllerAvailable()) {

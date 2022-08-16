@@ -373,7 +373,7 @@ public class MainContent extends RelativeLayout {
                 }
             }
         } else {
-            mBtnOpen.setEnabled(false);
+            mBtnOpen.setEnabled(true);
             mTextProduct.setText(R.string.product_information);
             mTextConnectionStatus.setText(R.string.connection_loose);
             mTextModelAvailable.setText("Firmware version:N/A");
