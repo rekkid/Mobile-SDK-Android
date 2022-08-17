@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -47,13 +48,13 @@ public class MyService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(receiver);
+//        unregisterReceiver(receiver);
     }
 
     private WebsocketBinder mBinder = new WebsocketBinder();
 
     private JWebSocketClient client;
-    class WebsocketBinder extends Binder {
+    public class WebsocketBinder extends Binder {
 
         public void startDownload() {
             Log.d("MyService", "startDownload executed");
@@ -69,19 +70,23 @@ public class MyService extends Service {
         public static final int SEND_WEBSOCKET_MSG = 1;
         public static final int STOP_WEBSOCKET_MSG = 2;
 
-        public void startTransfer(JWebSocketClient client) {
+        public void startTransfer(JWebSocketClient client, TextView tv) {
             MyService.this.client = client;
             Log.d("MyService", "start transfer");
 
             handler = new Handler(){
+                private int count = 0;
                 @Override
                 public void handleMessage(Message msg) {
                     switch (msg.what) {
                         case SEND_WEBSOCKET_MSG:
                             if (client != null) {
-                                client.send("测试消息123213214325432543642252354325325325425325325432接收");
+                                String sendMsg = String.valueOf(count) + ":模拟测试消息123213214325432543642252354325325325425325325432接收测试消息123213214325432543642252354325325325425325325432接收" ;
+                                client.send(sendMsg);
+                                sendEmptyMessageDelayed(SEND_WEBSOCKET_MSG, TIME_INTERVAL);
+                                tv.setText("已发送:" + sendMsg);
+                                count++;
                             }
-                            sendEmptyMessageDelayed(SEND_WEBSOCKET_MSG,TIME_INTERVAL);
                             break;
                         case STOP_WEBSOCKET_MSG:
                             Log.d("MyService", "stop msg");

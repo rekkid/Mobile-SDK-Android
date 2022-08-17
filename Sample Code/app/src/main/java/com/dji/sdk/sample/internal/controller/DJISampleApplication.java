@@ -2,7 +2,10 @@ package com.dji.sdk.sample.internal.controller;
 
 import android.app.Application;
 import android.content.Context;
+import android.widget.TextView;
 
+import com.dji.sdk.sample.demo.mydemo.MyService;
+import com.dji.sdk.sample.internal.utils.JWebSocketClient;
 import com.squareup.otto.Bus;
 import com.squareup.otto.ThreadEnforcer;
 
@@ -24,6 +27,28 @@ public class DJISampleApplication extends Application {
     private static BluetoothProductConnector bluetoothConnector = null;
     private static Bus bus = new Bus(ThreadEnforcer.ANY);
     private static Application app = null;
+
+    public static TextView getBasicInfoView() {
+        return basicInfoView;
+    }
+
+    public static void setBasicInfoView(TextView basicInfoView) {
+        DJISampleApplication.basicInfoView = basicInfoView;
+    }
+
+    private static TextView basicInfoView = null;
+    private static JWebSocketClient webSocketClient = null;
+    private static MyService.WebsocketBinder websocketBinder = null;
+
+    public static MyService.WebsocketBinder getWebsocketBinder() {
+        return websocketBinder;
+    }
+
+    public static void setWebsocketBinder(MyService.WebsocketBinder websocketBinder) {
+        DJISampleApplication.websocketBinder = websocketBinder;
+    }
+
+
 
     /**
      * Gets instance of the specific product connected after the
@@ -76,5 +101,13 @@ public class DJISampleApplication extends Application {
         MultiDex.install(this);
         com.secneo.sdk.Helper.install(this);
         app = this;
+    }
+
+    public static synchronized void setWebSocketClient(JWebSocketClient client) {
+        webSocketClient = client;
+    }
+
+    public static synchronized JWebSocketClient getWebSocketClient() {
+        return webSocketClient;
     }
 }
