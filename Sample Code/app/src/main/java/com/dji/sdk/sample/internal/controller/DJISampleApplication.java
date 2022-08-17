@@ -2,8 +2,10 @@ package com.dji.sdk.sample.internal.controller;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.ServiceConnection;
 import android.widget.TextView;
 
+import com.dji.sdk.sample.demo.mydemo.BasicInfoView;
 import com.dji.sdk.sample.demo.mydemo.MyService;
 import com.dji.sdk.sample.internal.utils.JWebSocketClient;
 import com.squareup.otto.Bus;
@@ -27,6 +29,16 @@ public class DJISampleApplication extends Application {
     private static BluetoothProductConnector bluetoothConnector = null;
     private static Bus bus = new Bus(ThreadEnforcer.ANY);
     private static Application app = null;
+
+    public static BasicInfoView.MyServiceConnection getConnection() {
+        return connection;
+    }
+
+    public static void setConnection(BasicInfoView.MyServiceConnection connection) {
+        DJISampleApplication.connection = connection;
+    }
+
+    private static BasicInfoView.MyServiceConnection connection = null;
 
     public static TextView getBasicInfoView() {
         return basicInfoView;

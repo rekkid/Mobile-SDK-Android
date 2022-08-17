@@ -42,6 +42,7 @@ import com.dji.sdk.sample.internal.view.PresentableView;
 
 import org.java_websocket.handshake.ServerHandshake;
 
+import java.lang.ref.WeakReference;
 import java.net.URI;
 
 public class BasicInfoView extends LinearLayout implements View.OnClickListener, PresentableView {
@@ -68,7 +69,12 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
 
     private String message;
     private int count;
-    private Handler handler;
+//    private Handler handler;
+
+    private MyService.WebsocketBinder websocketBinder = null;
+    private MyServiceConnection connection = null;
+
+
     public BasicInfoView(Context context) {
         super(context);
         initUI(context);
@@ -96,12 +102,14 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
 
         inputIpPort.setSaveEnabled(true);
 
-        resetButton();
-
         SharedPreferences pref = context.getSharedPreferences("data", MODE_PRIVATE);
         String ip = pref.getString("ip", "");
         inputIpPort.setText(ip);
         String info = pref.getString("info", "0");
+        boolean isChecked = pref.getBoolean("ischecked", true);
+        checkBox = (CheckBox) findViewById(R.id.checkbox_save);
+        checkBox.setChecked(isChecked);
+
 
         basicInfoTV.setText(info);
 
@@ -111,24 +119,92 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         test = (Button) findViewById(R.id.test);
         test.setOnClickListener(this);
 
-        handler = new Handler() {
-            public void handleMessage(Message msg) {
+        initButton();
+    }
+
+    private void initButton() {
+        boolean isConnect = false;
+        boolean isDisconnect = false;
+        boolean isTransfer = false;
+        boolean isStop = false;
+        if (DJISampleApplication.getWebSocketClient() == null) {
+            isConnect = true;
+        } else {
+            isDisconnect = true;
+
+            if (DJISampleApplication.getWebsocketBinder() == null) {
+                isTransfer = true;
+            } else {
+                isStop = true;
+            }
+        }
+
+        updateButton(isConnect, isDisconnect, isTransfer, isStop);
+
+    }
+
+    private static class MessageHandler extends Handler {
+        private final WeakReference<BasicInfoView> basicInfoViewWeakReference;
+
+        public MessageHandler(BasicInfoView basicInfoView) {
+            basicInfoViewWeakReference = new WeakReference<BasicInfoView>(basicInfoView);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            BasicInfoView basicInfoView = basicInfoViewWeakReference.get();
+            super.handleMessage(msg);
+            if (basicInfoView != null) {
                 switch (msg.what) {
                     case UPDATE_WEBSOCKET_MSG:
-                        BasicInfoView.this.basicInfoTV.setText(count + "\n");
-                        count++;
+                        basicInfoView.basicInfoTV.setText(basicInfoView.count + "\n");
+                        basicInfoView.count++;
                         break;
                     default:
                         break;
                 }
             }
-        };
+        }
     }
 
+    public class MyServiceConnection implements ServiceConnection {
+        private TextView tv;
+        private JWebSocketClient client;
+
+        public MyServiceConnection(TextView tv, JWebSocketClient client) {
+            this.tv = tv;
+            this.client = client;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            websocketBinder = (MyService.WebsocketBinder) service;
+            websocketBinder.startTransfer(client, tv);
+        }
+
+        public void setBasicInfoTV(TextView basicInfoTV) {
+            tv = basicInfoTV;
+        }
+
+        public void setClient(JWebSocketClient client) {
+            this.client = client;
+        }
+    }
     private void restoreTransfer() {
+        connection = DJISampleApplication.getConnection();
+        if (connection == null) {
+            connection = new MyServiceConnection(basicInfoTV, client);
+        } else {
+            connection.setBasicInfoTV(basicInfoTV);
+            connection.setClient(client);
+        }
         websocketBinder = DJISampleApplication.getWebsocketBinder();
         if (websocketBinder != null) {
-            websocketBinder.startTransfer(client, basicInfoTV);
+            websocketBinder.setBasicInfoTV(basicInfoTV);
         }
     }
 
@@ -165,36 +241,24 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
 //        initAccessLockerListener();
     }
 
-    private MyService.WebsocketBinder websocketBinder;
-
-    private ServiceConnection connection = new ServiceConnection() {
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            websocketBinder = (MyService.WebsocketBinder) service;
-            websocketBinder.startTransfer(client, basicInfoTV);
-        }
-
-    };
-
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.transfer:
                 startTransfer();
+                updateButton(false, true, false, true);
                 break;
             case R.id.stop:
                 stopTransfer();
+                updateButton(false, true, true, false);
                 break;
             case R.id.connect:
-                connectServer();
+                boolean isOk = connectServer();
+                updateButton(!isOk, isOk, isOk, false);
                 break;
             case R.id.disconnect:
                 disconnectServer();
+                updateButton(true, false, false, false);
                 break;
             case R.id.test:
                 basicInfoTV.setText("aaaaaaaaaaaaaaaaa\n");
@@ -204,6 +268,8 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     }
 
     private void startTransfer() {
+        connection.setBasicInfoTV(basicInfoTV);
+        connection.setClient(client);
         Intent intent = new Intent(this.context, MyService.class);
         this.context.startService(intent);
         this.context.bindService(intent, connection, BIND_AUTO_CREATE); // 绑定服务
@@ -212,13 +278,15 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     }
 
     private void stopTransfer() {
-
         this.context.unbindService(connection);
+        websocketBinder = DJISampleApplication.getWebsocketBinder();
         if (websocketBinder != null) {
             websocketBinder.stopTransfer();
         }
         Intent intent = new Intent(this.context, MyService.class);
         this.context.stopService(intent);
+        websocketBinder = null;
+        DJISampleApplication.setWebsocketBinder(null);
         stop.setEnabled(false);
         transfer.setEnabled(true);
     }
@@ -240,10 +308,15 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
 
 
 
-    public void connectServer() {
+    public boolean connectServer() {
         basicInfoTV.setText("connect to" + inputIpPort.getText() + "\n");
-
-        URI uri = URI.create("ws://" + inputIpPort.getText());
+        URI uri;
+        try {
+            uri = URI.create("ws://" + inputIpPort.getText());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
         client = new JWebSocketClient(uri) {
             private int count;
             @Override
@@ -254,6 +327,13 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
 //                msg.what = UPDATE_WEBSOCKET_MSG;
 //                BasicInfoView.this.message = message;
 //                handler.sendMessage(msg);
+            }
+
+            @Override
+            public void onClose(int code, String reason, boolean remote) {
+                super.onClose(code, reason, remote);
+                Log.e("JWebSClientService", "websocket close");
+                disconnectServer();
             }
         };
 
@@ -271,6 +351,7 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         disconnect.setEnabled(true);
         transfer.setEnabled(true);
         stop.setEnabled(false);
+        return true;
     }
 
     public void disconnectServer() {
@@ -285,15 +366,14 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
             e.printStackTrace();
         } finally {
             client = null;
-            resetButton();
         }
     }
 
-    private void resetButton() {
-        connect.setEnabled(true);
-        disconnect.setEnabled(false);
-        transfer.setEnabled(true);
-        stop.setEnabled(false);
+    private void updateButton(boolean isConnect, boolean isDisconnect, boolean isTransfer, boolean isStop) {
+        connect.setEnabled(isConnect);
+        disconnect.setEnabled(isDisconnect);
+        transfer.setEnabled(isTransfer);
+        stop.setEnabled(isStop);
     }
 
     @Override
@@ -310,19 +390,20 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        checkBox = (CheckBox) findViewById(R.id.checkbox_save);
         SharedPreferences.Editor editor = context.getSharedPreferences("data", MODE_PRIVATE).edit();
         if (checkBox.isChecked()) {
             editor.putString("ip", String.valueOf(inputIpPort.getText()));
             editor.putString("info", String.valueOf(basicInfoTV.getText()));
+            editor.putBoolean("ischecked", true);
         } else {
             editor.putString("ip", "");
             editor.putString("info", "");
+            editor.putBoolean("ischecked", false);
         }
         editor.apply();
 
         DJISampleApplication.setWebSocketClient(client);
         DJISampleApplication.setBasicInfoView(basicInfoTV);
-        DJISampleApplication.setWebsocketBinder(websocketBinder);
+        DJISampleApplication.setConnection(connection);
     }
 }

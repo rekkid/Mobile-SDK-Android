@@ -6,9 +6,7 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -18,10 +16,13 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.dji.sdk.sample.internal.controller.DJISampleApplication;
 import com.dji.sdk.sample.internal.utils.JWebSocketClient;
 
+import java.lang.ref.WeakReference;
+
 public class MyService extends Service {
-    int TIME_INTERVAL = 50; // 这是1s
+    private final static int TIME_INTERVAL = 50; // 这是1s
     PendingIntent pendingIntent;
     AlarmManager alarmManager;
 
@@ -49,12 +50,18 @@ public class MyService extends Service {
     public void onDestroy() {
         super.onDestroy();
 //        unregisterReceiver(receiver);
+        mBinder.handler.removeCallbacksAndMessages(null);
     }
 
     private WebsocketBinder mBinder = new WebsocketBinder();
 
     private JWebSocketClient client;
-    public class WebsocketBinder extends Binder {
+
+    public class TransferHandler extends Handler {
+
+    }
+
+    public static class WebsocketBinder extends Binder {
 
         public void startDownload() {
             Log.d("MyService", "startDownload executed");
@@ -65,27 +72,38 @@ public class MyService extends Service {
             return 0;
         }
 
-        private Handler handler;
+        private MessageHandler handler;
 
         public static final int SEND_WEBSOCKET_MSG = 1;
         public static final int STOP_WEBSOCKET_MSG = 2;
 
-        public void startTransfer(JWebSocketClient client, TextView tv) {
-            MyService.this.client = client;
-            Log.d("MyService", "start transfer");
+        public static int count;
 
-            handler = new Handler(){
-                private int count = 0;
-                @Override
-                public void handleMessage(Message msg) {
+        private static class MessageHandler extends Handler {
+//            private final WeakReference<WebsocketBinder> websocketBinderWeakReference;
+            private WebsocketBinder websocketBinder;
+            private JWebSocketClient client;
+            private TextView tv;
+
+            public MessageHandler(WebsocketBinder websocketBinder, JWebSocketClient client, TextView tv) {
+                this.websocketBinder = websocketBinder;
+                this.client = client;
+                this.tv = tv;
+            }
+
+            @Override
+            public void handleMessage(Message msg) {
+//                WebsocketBinder websocketBinder = websocketBinderWeakReference.get();
+                super.handleMessage(msg);
+                if (websocketBinder != null) {
                     switch (msg.what) {
                         case SEND_WEBSOCKET_MSG:
                             if (client != null) {
-                                String sendMsg = String.valueOf(count) + ":模拟测试消息123213214325432543642252354325325325425325325432接收测试消息123213214325432543642252354325325325425325325432接收" ;
+                                String sendMsg = String.valueOf(websocketBinder.count) + ":模拟测试消息123213214325432543642252354325325325425325325432接收测试消息123213214325432543642252354325325325425325325432接收" ;
                                 client.send(sendMsg);
                                 sendEmptyMessageDelayed(SEND_WEBSOCKET_MSG, TIME_INTERVAL);
                                 tv.setText("已发送:" + sendMsg);
-                                count++;
+                                websocketBinder.count++;
                             }
                             break;
                         case STOP_WEBSOCKET_MSG:
@@ -94,16 +112,34 @@ public class MyService extends Service {
                         default:
                             break;
                     }
+                } else {
+                    Log.d("afafad", "nulll");
                 }
-            };
+            }
 
+            public void setBasicInfoTV(TextView basicInfoView) {
+                this.tv = basicInfoView;
+            }
+        }
+
+        public void startTransfer(JWebSocketClient client, TextView tv) {
+            handler = new MessageHandler(this, client, tv);
+            DJISampleApplication.setWebsocketBinder(this);
+            Log.d("MyService", "start transfer");
             handler.sendEmptyMessageDelayed(SEND_WEBSOCKET_MSG, TIME_INTERVAL);
         }
 
         public void stopTransfer() {
             handler.removeCallbacksAndMessages(null);
         }
+
+        public void setBasicInfoTV(TextView basicInfoView) {
+            handler.setBasicInfoTV(basicInfoView);
+        }
     }
+
+
+
 
     @Nullable
     @Override
