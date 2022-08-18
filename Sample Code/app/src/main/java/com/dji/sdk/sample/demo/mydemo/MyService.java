@@ -80,29 +80,50 @@ public class MyService extends Service {
         public static int count;
 
         private static class MessageHandler extends Handler {
-//            private final WeakReference<WebsocketBinder> websocketBinderWeakReference;
-            private WebsocketBinder websocketBinder;
+            private final WeakReference<WebsocketBinder> websocketBinderWeakReference;
+            //            private WebsocketBinder websocketBinder;
             private JWebSocketClient client;
             private TextView tv;
 
             public MessageHandler(WebsocketBinder websocketBinder, JWebSocketClient client, TextView tv) {
-                this.websocketBinder = websocketBinder;
+                this.websocketBinderWeakReference = new WeakReference<WebsocketBinder>(websocketBinder);
                 this.client = client;
                 this.tv = tv;
             }
 
+
+            void refreshTextView(String msg) {
+                tv.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        tv.append(msg);
+                        int offset = tv.getLineCount() * tv.getLineHeight();
+                        if (offset > tv.getHeight()){
+                            tv.scrollTo(0,offset - tv.getHeight());
+                        }
+                    }
+                });
+
+
+//                tv.append(msg);
+//                int offset = tv.getLineCount() * tv.getLineHeight();
+//                if (offset > tv.getHeight()) {
+//                    tv.scrollTo(0, offset - tv.getHeight());
+//                }
+            }
+
             @Override
             public void handleMessage(Message msg) {
-//                WebsocketBinder websocketBinder = websocketBinderWeakReference.get();
+                WebsocketBinder websocketBinder = websocketBinderWeakReference.get();
                 super.handleMessage(msg);
                 if (websocketBinder != null) {
                     switch (msg.what) {
                         case SEND_WEBSOCKET_MSG:
                             if (client != null) {
-                                String sendMsg = String.valueOf(websocketBinder.count) + ":模拟测试消息123213214325432543642252354325325325425325325432接收测试消息123213214325432543642252354325325325425325325432接收" ;
+                                String sendMsg = (websocketBinder.count) + ":模拟测试消息123213214325432543642252354325325325425325325432接收测试消息123213214325432543642252354325325325425325325432接收";
                                 client.send(sendMsg);
                                 sendEmptyMessageDelayed(SEND_WEBSOCKET_MSG, TIME_INTERVAL);
-                                tv.setText("已发送:" + sendMsg);
+                                refreshTextView("已发送:" + sendMsg + "\n");
                                 websocketBinder.count++;
                             }
                             break;
@@ -137,9 +158,6 @@ public class MyService extends Service {
             handler.setBasicInfoTV(basicInfoView);
         }
     }
-
-
-
 
     @Nullable
     @Override

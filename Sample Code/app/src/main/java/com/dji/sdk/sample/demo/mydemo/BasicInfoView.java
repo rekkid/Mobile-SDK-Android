@@ -57,6 +57,8 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     private Context context;
     private CheckBox checkBox;
     protected Button test;
+    private EditText intervalET;
+    private int interval;
     private Handler viewHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message msg) {
@@ -70,7 +72,6 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     private String message;
     private int count;
 //    private Handler handler;
-
     private MyService.WebsocketBinder websocketBinder = null;
     private MyServiceConnection connection = null;
 
@@ -86,10 +87,10 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     private void initUI(Context context) {
         LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Service.LAYOUT_INFLATER_SERVICE);
         layoutInflater.inflate(R.layout.activity_basic_info_view, this, true);
+
         basicInfoTV = (TextView) findViewById(R.id.tv_basic_info);
 
-
-//        basicInfoTV.setMovementMethod(ScrollingMovementMethod.getInstance());
+        basicInfoTV.setMovementMethod(ScrollingMovementMethod.getInstance());
         inputIpPort = (EditText) findViewById(R.id.input_ip_port);
         connect = (Button) findViewById(R.id.connect);
         connect.setOnClickListener(this);
@@ -99,25 +100,34 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         transfer.setOnClickListener(this);
         stop = (Button) findViewById(R.id.stop);
         stop.setOnClickListener(this);
-
-        inputIpPort.setSaveEnabled(true);
-
-        SharedPreferences pref = context.getSharedPreferences("data", MODE_PRIVATE);
-        String ip = pref.getString("ip", "");
-        inputIpPort.setText(ip);
-        String info = pref.getString("info", "0");
-        boolean isChecked = pref.getBoolean("ischecked", true);
-        checkBox = (CheckBox) findViewById(R.id.checkbox_save);
-        checkBox.setChecked(isChecked);
-
-
-        basicInfoTV.setText(info);
-
-        if (DJISampleApplication.getWebSocketClient() != null) {
-            client = DJISampleApplication.getWebSocketClient();
-        }
         test = (Button) findViewById(R.id.test);
         test.setOnClickListener(this);
+
+        checkBox = (CheckBox) findViewById(R.id.checkbox_save);
+        SharedPreferences pref = context.getSharedPreferences("data", MODE_PRIVATE);
+        boolean isChecked = pref.getBoolean("ischecked", true);
+        if (isChecked) {
+            String ip = pref.getString("ip", "");
+            inputIpPort.setText(ip);
+            String info = pref.getString("info", "0");
+            checkBox.setChecked(isChecked);
+            basicInfoTV.setText(info);
+
+            basicInfoTV.post(new Runnable() {
+                @Override
+                public void run() {
+                    int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
+                    if (offset > basicInfoTV.getHeight()){
+                        basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
+                    }
+                }
+            });
+
+
+            interval = pref.getInt("interval", 50);
+            intervalET = (EditText) findViewById(R.id.et_interval);
+            intervalET.setText(String.valueOf(interval));
+        }
 
         initButton();
     }
@@ -167,6 +177,7 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         }
     }
 
+
     public class MyServiceConnection implements ServiceConnection {
         private TextView tv;
         private JWebSocketClient client;
@@ -194,7 +205,11 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
             this.client = client;
         }
     }
+
     private void restoreTransfer() {
+        if (DJISampleApplication.getWebSocketClient() != null) {
+            client = DJISampleApplication.getWebSocketClient();
+        }
         connection = DJISampleApplication.getConnection();
         if (connection == null) {
             connection = new MyServiceConnection(basicInfoTV, client);
@@ -237,8 +252,6 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
-//        initAccessLocker();
-//        initAccessLockerListener();
     }
 
     @Override
@@ -291,20 +304,26 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         transfer.setEnabled(true);
     }
 
-//    private void aappendTextView(String s) {
-////        basicInfoTV.append(s);
-////        int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
-////        if (offset > basicInfoTV.getHeight()) {
-////            basicInfoTV.scrollTo(0, offset - basicInfoTV.getHeight());
-////        }
-//
-//        handler.post(new Runnable(){
-//            @Override
-//            public void run() {
-//                basicInfoTV.setText(s);
-//            }
-//        });
-//    }
+
+    private void appendTextView(String s) {
+        basicInfoTV.post(new Runnable() {
+            @Override
+            public void run() {
+                basicInfoTV.append(s);
+                int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
+                if (offset > basicInfoTV.getHeight()){
+                    basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
+                }
+            }
+        });
+
+//        basicInfoTV.append(s);
+//        int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
+//        if (offset > basicInfoTV.getHeight()){
+//            basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
+//        }
+    }
+
 
 
 
@@ -321,12 +340,9 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
             private int count;
             @Override
             public void onMessage(String message) {
-                //message就是接收到的消息
-                Log.e("JWebSClientService", message);
-//                Message msg = new Message();
-//                msg.what = UPDATE_WEBSOCKET_MSG;
-//                BasicInfoView.this.message = message;
-//                handler.sendMessage(msg);
+                // 处理接收到的消息
+                Log.d("JWebSClientService", "已收到:" + message);
+                appendTextView("已收到:" + message + "\n");
             }
 
             @Override
@@ -347,10 +363,6 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
             client.send("已连接服务器");
         }
 
-        connect.setEnabled(false);
-        disconnect.setEnabled(true);
-        transfer.setEnabled(true);
-        stop.setEnabled(false);
         return true;
     }
 
