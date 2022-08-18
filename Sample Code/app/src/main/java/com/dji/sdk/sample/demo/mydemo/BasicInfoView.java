@@ -22,6 +22,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
 import android.provider.SyncStateContract;
+import android.text.Layout;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,6 +33,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.dji.sdk.sample.R;
@@ -44,6 +46,8 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import java.lang.ref.WeakReference;
 import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class BasicInfoView extends LinearLayout implements View.OnClickListener, PresentableView {
     protected TextView basicInfoTV;
@@ -58,6 +62,9 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     private CheckBox checkBox;
     protected Button test;
     private EditText intervalET;
+    private ScrollView scroll;
+    private SimpleDateFormat sdfTwo = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+
     private int interval;
     private Handler viewHandler = new Handler(new Handler.Callback() {
         @Override
@@ -102,7 +109,9 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         stop.setOnClickListener(this);
         test = (Button) findViewById(R.id.test);
         test.setOnClickListener(this);
-
+        scroll = (ScrollView) findViewById(R.id.scroll_basicinfo);
+        DJISampleApplication.setScroll(scroll);
+        intervalET = (EditText) findViewById(R.id.et_interval);
         checkBox = (CheckBox) findViewById(R.id.checkbox_save);
         SharedPreferences pref = context.getSharedPreferences("data", MODE_PRIVATE);
         boolean isChecked = pref.getBoolean("ischecked", true);
@@ -123,9 +132,7 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
                 }
             });
 
-
             interval = pref.getInt("interval", 50);
-            intervalET = (EditText) findViewById(R.id.et_interval);
             intervalET.setText(String.valueOf(interval));
         }
 
@@ -194,7 +201,7 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             websocketBinder = (MyService.WebsocketBinder) service;
-            websocketBinder.startTransfer(client, tv);
+            websocketBinder.startTransfer(client, tv, interval);
         }
 
         public void setBasicInfoTV(TextView basicInfoTV) {
@@ -281,6 +288,7 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
     }
 
     private void startTransfer() {
+        interval = Integer.valueOf(intervalET.getText().toString());
         connection.setBasicInfoTV(basicInfoTV);
         connection.setClient(client);
         Intent intent = new Intent(this.context, MyService.class);
@@ -306,16 +314,45 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
 
 
     private void appendTextView(String s) {
-        basicInfoTV.post(new Runnable() {
-            @Override
+        scroll.post(new Runnable() {
             public void run() {
-                basicInfoTV.append(s);
-                int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
-                if (offset > basicInfoTV.getHeight()){
-                    basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
+                if (scroll == null || basicInfoTV == null) {
+                    return;
                 }
+                basicInfoTV.append(s);
+
+                View contentView = scroll.getChildAt(0);
+                if (contentView.getMeasuredHeight() <= scroll.getScrollY() + scroll.getHeight() + 50) {
+                    scroll.fullScroll(View.FOCUS_DOWN);
+                }
+
             }
+
+
+
+//            public void run() {
+//                if (scroll == null || basicInfoTV == null) {
+//                    return;
+//                }
+//                basicInfoTV.append(s);
+//                int offset = basicInfoTV.getMeasuredHeight() - scroll.getHeight();
+//                if (offset < 0) {
+//                    offset = 0;
+//                }
+//                scroll.scrollTo(0, offset);
+//            }
         });
+
+//        basicInfoTV.post(new Runnable() {
+//            @Override
+//            public void run() {
+//                basicInfoTV.append(s);
+//                int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
+//                if (offset > basicInfoTV.getHeight()){
+//                    basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
+//                }
+//            }
+//        });
 
 //        basicInfoTV.append(s);
 //        int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
@@ -342,7 +379,9 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
             public void onMessage(String message) {
                 // 处理接收到的消息
                 Log.d("JWebSClientService", "已收到:" + message);
-                appendTextView("已收到:" + message + "\n");
+
+                String time = sdfTwo.format( System.currentTimeMillis());
+                appendTextView(time + " 已收到:" + message + "\n");
             }
 
             @Override

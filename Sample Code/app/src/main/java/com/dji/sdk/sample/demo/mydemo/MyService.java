@@ -11,7 +11,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
+import android.text.Layout;
 import android.util.Log;
+import android.view.View;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -20,12 +23,14 @@ import com.dji.sdk.sample.internal.controller.DJISampleApplication;
 import com.dji.sdk.sample.internal.utils.JWebSocketClient;
 
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class MyService extends Service {
-    private final static int TIME_INTERVAL = 50; // 这是1s
+    private static int TIME_INTERVAL = 50; // 这是1s
     PendingIntent pendingIntent;
     AlarmManager alarmManager;
-
+    private static SimpleDateFormat sdfTwo = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
     @Override
     public void onCreate() {
         super.onCreate();
@@ -84,6 +89,7 @@ public class MyService extends Service {
             //            private WebsocketBinder websocketBinder;
             private JWebSocketClient client;
             private TextView tv;
+            private ScrollView scroll;
 
             public MessageHandler(WebsocketBinder websocketBinder, JWebSocketClient client, TextView tv) {
                 this.websocketBinderWeakReference = new WeakReference<WebsocketBinder>(websocketBinder);
@@ -93,23 +99,34 @@ public class MyService extends Service {
 
 
             void refreshTextView(String msg) {
-                tv.post(new Runnable() {
-                    @Override
+//                Handler mHandler = new Handler();
+                ScrollView scroll = DJISampleApplication.getScroll();
+                scroll.post(new Runnable() {
                     public void run() {
-                        tv.append(msg);
-                        int offset = tv.getLineCount() * tv.getLineHeight();
-                        if (offset > tv.getHeight()){
-                            tv.scrollTo(0,offset - tv.getHeight());
+                        if (scroll == null || tv == null) {
+                            return;
                         }
+                        tv.append(msg);
+                        View contentView = scroll.getChildAt(0);
+                        if (contentView.getMeasuredHeight() <= scroll.getScrollY() + scroll.getHeight() + 50) {
+                            scroll.fullScroll(View.FOCUS_DOWN);
+                        }
+
+
                     }
+
+//                    public void run() {
+//                        if (scroll == null || tv == null) {
+//                            return;
+//                        }
+//                        tv.append(msg);
+//                        int offset = tv.getMeasuredHeight() - scroll.getHeight();
+//                        if (offset < 0) {
+//                            offset = 0;
+//                        }
+//                        scroll.scrollTo(0, offset);
+//                    }
                 });
-
-
-//                tv.append(msg);
-//                int offset = tv.getLineCount() * tv.getLineHeight();
-//                if (offset > tv.getHeight()) {
-//                    tv.scrollTo(0, offset - tv.getHeight());
-//                }
             }
 
             @Override
@@ -122,8 +139,11 @@ public class MyService extends Service {
                             if (client != null) {
                                 String sendMsg = (websocketBinder.count) + ":模拟测试消息123213214325432543642252354325325325425325325432接收测试消息123213214325432543642252354325325325425325325432接收";
                                 client.send(sendMsg);
+                                Log.d("JWebSClientService", "已发送:" + sendMsg);
                                 sendEmptyMessageDelayed(SEND_WEBSOCKET_MSG, TIME_INTERVAL);
-                                refreshTextView("已发送:" + sendMsg + "\n");
+
+                                String time = sdfTwo.format( System.currentTimeMillis());
+                                refreshTextView(time + " 已发送:" + sendMsg + "\n");
                                 websocketBinder.count++;
                             }
                             break;
@@ -143,7 +163,8 @@ public class MyService extends Service {
             }
         }
 
-        public void startTransfer(JWebSocketClient client, TextView tv) {
+        public void startTransfer(JWebSocketClient client, TextView tv, int interval) {
+            TIME_INTERVAL = interval;
             handler = new MessageHandler(this, client, tv);
             DJISampleApplication.setWebsocketBinder(this);
             Log.d("MyService", "start transfer");

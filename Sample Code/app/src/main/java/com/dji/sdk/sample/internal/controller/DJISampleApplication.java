@@ -3,6 +3,7 @@ package com.dji.sdk.sample.internal.controller;
 import android.app.Application;
 import android.content.Context;
 import android.content.ServiceConnection;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.dji.sdk.sample.demo.mydemo.BasicInfoView;
@@ -51,6 +52,15 @@ public class DJISampleApplication extends Application {
     private static TextView basicInfoView = null;
     private static JWebSocketClient webSocketClient = null;
     private static MyService.WebsocketBinder websocketBinder = null;
+    private static ScrollView scroll = null;
+
+    public static ScrollView getScroll() {
+        return scroll;
+    }
+
+    public static void setScroll(ScrollView scroll) {
+        DJISampleApplication.scroll = scroll;
+    }
 
     public static MyService.WebsocketBinder getWebsocketBinder() {
         return websocketBinder;
