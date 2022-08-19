@@ -108,9 +108,10 @@ public class MyService extends Service {
                         }
                         tv.append(msg);
                         View contentView = scroll.getChildAt(0);
-                        if (contentView.getMeasuredHeight() <= scroll.getScrollY() + scroll.getHeight() + 50) {
-                            scroll.fullScroll(View.FOCUS_DOWN);
-                        }
+                        scroll.fullScroll(View.FOCUS_DOWN);
+//                        if (contentView.getMeasuredHeight() <= scroll.getScrollY() + scroll.getHeight() + 50) {
+//                            scroll.fullScroll(View.FOCUS_DOWN);
+//                        }
 
 
                     }
@@ -137,7 +138,7 @@ public class MyService extends Service {
                     switch (msg.what) {
                         case SEND_WEBSOCKET_MSG:
                             if (client != null) {
-                                String sendMsg = (websocketBinder.count) + ":模拟测试消息123213214325432543642252354325325325425325325432接收测试消息123213214325432543642252354325325325425325325432接收";
+                                String sendMsg = (websocketBinder.count) + ":模拟测试消息开始123213214325432543642252354325325325425325325432中间123213214325432543642252354325325325425325325432j末尾";
                                 client.send(sendMsg);
                                 Log.d("JWebSClientService", "已发送:" + sendMsg);
                                 sendEmptyMessageDelayed(SEND_WEBSOCKET_MSG, TIME_INTERVAL);

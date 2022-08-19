@@ -96,8 +96,8 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
         layoutInflater.inflate(R.layout.activity_basic_info_view, this, true);
 
         basicInfoTV = (TextView) findViewById(R.id.tv_basic_info);
-
         basicInfoTV.setMovementMethod(ScrollingMovementMethod.getInstance());
+        DJISampleApplication.setBasicInfoView(basicInfoTV);
         inputIpPort = (EditText) findViewById(R.id.input_ip_port);
         connect = (Button) findViewById(R.id.connect);
         connect.setOnClickListener(this);
@@ -121,17 +121,14 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
             String info = pref.getString("info", "0");
             checkBox.setChecked(isChecked);
             basicInfoTV.setText(info);
-
-            basicInfoTV.post(new Runnable() {
-                @Override
+            scroll.post(new Runnable() {
                 public void run() {
-                    int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
-                    if (offset > basicInfoTV.getHeight()){
-                        basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
+                    if (scroll == null || basicInfoTV == null) {
+                        return;
                     }
+                    scroll.fullScroll(View.FOCUS_DOWN);
                 }
             });
-
             interval = pref.getInt("interval", 50);
             intervalET.setText(String.valueOf(interval));
         }
@@ -314,58 +311,28 @@ public class BasicInfoView extends LinearLayout implements View.OnClickListener,
 
 
     private void appendTextView(String s) {
+        ScrollView scroll = DJISampleApplication.getScroll();
         scroll.post(new Runnable() {
             public void run() {
-                if (scroll == null || basicInfoTV == null) {
-                    return;
-                }
-                basicInfoTV.append(s);
-
-                View contentView = scroll.getChildAt(0);
-                if (contentView.getMeasuredHeight() <= scroll.getScrollY() + scroll.getHeight() + 50) {
-                    scroll.fullScroll(View.FOCUS_DOWN);
-                }
-
-            }
-
-
-
-//            public void run() {
 //                if (scroll == null || basicInfoTV == null) {
 //                    return;
 //                }
-//                basicInfoTV.append(s);
-//                int offset = basicInfoTV.getMeasuredHeight() - scroll.getHeight();
-//                if (offset < 0) {
-//                    offset = 0;
-//                }
-//                scroll.scrollTo(0, offset);
-//            }
+                DJISampleApplication.getBasicInfoView().append(s);
+
+                View contentView = scroll.getChildAt(0);
+                scroll.fullScroll(View.FOCUS_DOWN);
+
+            }
+
         });
 
-//        basicInfoTV.post(new Runnable() {
-//            @Override
-//            public void run() {
-//                basicInfoTV.append(s);
-//                int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
-//                if (offset > basicInfoTV.getHeight()){
-//                    basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
-//                }
-//            }
-//        });
-
-//        basicInfoTV.append(s);
-//        int offset = basicInfoTV.getLineCount() * basicInfoTV.getLineHeight();
-//        if (offset > basicInfoTV.getHeight()){
-//            basicInfoTV.scrollTo(0,offset - basicInfoTV.getHeight());
-//        }
     }
 
 
 
 
     public boolean connectServer() {
-        basicInfoTV.setText("connect to" + inputIpPort.getText() + "\n");
+        basicInfoTV.setText("已连接到:" + inputIpPort.getText() + "\n");
         URI uri;
         try {
             uri = URI.create("ws://" + inputIpPort.getText());

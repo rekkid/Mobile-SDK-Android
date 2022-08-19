@@ -108,7 +108,7 @@
             <ScrollView
                 android:id="@+id/scroll_basicinfo"
                 android:layout_width="match_parent"
-                android:layout_height="400dp">
+                android:layout_height="480dp">
 
                 <TextView
                     android:layout_width="match_parent"
