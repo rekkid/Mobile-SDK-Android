@@ -74,10 +74,11 @@
 
     <string name="component_listview_key_manager">KeyManager</string>
 
-    <string name="component_listview_CFCDemo">CfcDemo</string>
-    <string name="component_listview_CFCDemo_BasicInfo">Basic Info</string>
-    <string name="component_listview_CFCDemo_VirtualStick">Virtual Stick</string>
-    <string name="component_listview_CFCDemo_Live">Live</string>
+    <string name="component_listview_MyDemo">MyDemo</string>
+    <string name="component_listview_MyDemo_BasicInfo">Basic Info</string>
+    <string name="component_listview_MyDemo_VirtualStick">Virtual Stick</string>
+    <string name="component_listview_MyDemo_Live">Live</string>
+    <string name="component_listview_MyDemo_WayPoint">Way Point</string>
 
     <!-- KeyManager list-->
     <string name="key_manager_listview_key_Interface">Key Manager View</string>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.dji.sdk.sample">
+    package="com.dji.sdk.mydemo">
     <!-- SDK permission requirement -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -25,7 +25,7 @@
         android:required="true" />
 
     <application
-        android:name=".internal.controller.DJISampleApplication"
+        android:name="com.dji.sdk.mydemo.internal.controller.DJISampleApplication"
         android:allowBackup="true"
         android:extractNativeLibs="true"
         android:icon="@mipmap/ic_launcher"
@@ -45,13 +45,13 @@
         <!-- personal key -->
         <meta-data
             android:name="com.dji.sdk.API_KEY"
-            android:value="Please enter your App key here." />
+            android:value="85635780aa7de4d17bcea300" />
         <!--
  Required for receiving accessory attachment events.
             This is necessary for product when connecting over USB.
         -->
         <activity
-            android:name="com.dji.sdk.sample.internal.controller.MainActivity"
+            android:name="com.dji.sdk.mydemo.internal.controller.MainActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:label="@string/sample_app_name"
@@ -72,19 +72,19 @@
                 android:resource="@xml/accessory_filter" />
         </activity>
         <activity
-            android:name="com.dji.sdk.sample.demo.payload.PayloadActivity"
+            android:name="com.dji.sdk.mydemo.demo.payload.PayloadActivity"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="landscape" />
         <activity
-            android:name="com.dji.sdk.sample.demo.payload.PayloadSendGetDataActivity"
+            android:name="com.dji.sdk.mydemo.demo.payload.PayloadSendGetDataActivity"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="landscape" />
         <activity
-            android:name="com.dji.sdk.sample.demo.payload.PayloadWidgetActivity"
+            android:name="com.dji.sdk.mydemo.demo.payload.PayloadWidgetActivity"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="landscape" />
-        <activity android:name=".demo.utmiss.UTMISSActivity" />
-        <service android:name=".demo.mydemo.MyService"
+        <activity android:name="com.dji.sdk.mydemo.demo.utmiss.UTMISSActivity" />
+        <service android:name="com.dji.sdk.mydemo.demo.mydemo.MyService"
             android:enabled="true"
             android:exported="true">
         </service>

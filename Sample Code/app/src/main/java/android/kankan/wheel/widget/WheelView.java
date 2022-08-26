@@ -34,7 +34,7 @@ import android.view.animation.Interpolator;
 import android.wheel.wheel.adapter.WheelViewAdapter;
 import android.widget.LinearLayout;
 
-import com.dji.sdk.sample.R;
+import com.dji.sdk.mydemo.R;
 
 import java.util.LinkedList;
 import java.util.List;
