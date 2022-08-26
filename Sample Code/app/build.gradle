@@ -13,7 +13,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        applicationId "com.dji.sdk.sample"
+        applicationId "com.dji.sdk.mydemo"
         minSdkVersion 23
         targetSdkVersion 31
         multiDexEnabled true
